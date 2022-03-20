@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="index.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js" ></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.2/underscore-min.js" ></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/backbone.js/1.1.2/backbone-min.js" ></script>
+    <script src="https://cdn.rawgit.com/mneubrand/jsfxr/master/jsfxr.js" ></script>
+    <title>Tetris</title>
+</head>
+<body>
+    <h1>Backbone Tetris</h1>
+        <p>Implementation of Tetris in backbone.js</p>
+        <div id="controls">
+            <button id="pause">Pause (p)</button>
+            <button id="mute">Mute (m)</button>
+            <button id="new_game">New Game (n)</button>
+        </div>
+        <div id="board">
+            <canvas width="300" height="500"></canvas>
+        <div id="gridContainer">
+            <div class="grid"></div>
+        </div>
+        <div id="message"></div>
+    </div>
+
+    <script src="tetris/file-1.js"></script>
+    <script src="tetris/file-2.js"></script>
+    <script src="tetris/file-3.js"></script>
+    <script src="tetris/app.js"></script>
+
+</body>
+</html>
