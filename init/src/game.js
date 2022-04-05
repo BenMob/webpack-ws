@@ -1,13 +1,35 @@
+var app = app || {};
+
+app.Block = Backbone.Model.extend({
+
+  defaults: {
+    x: 0,
+    y: 0
+  },
+
+  initialize: function () {
+    var shape = this.get('shape');
+    this.set('width', shape[0].length);
+    this.set('height', shape.length);
+  }
+
+});
+
+app.Board = Backbone.Collection.extend({
+
+  model: app.Block
+
+});
 
 app.BlockView = Backbone.View.extend({
 
-  initialize: function() {
+  initialize: function () {
     var self = this;
     this.render();
     this.model.on('change', _.bind(this.render, this));
   },
 
-  render: function() {
+  render: function () {
     this.clearCanvas();
     var self = this;
     var shape = this.model.get('shape');
@@ -25,12 +47,12 @@ app.BlockView = Backbone.View.extend({
     return this;
   },
 
-  clearCanvas: function() {
+  clearCanvas: function () {
     app.context.clearRect(0, 0, app.canvas.width, app.canvas.height);
 
   },
 
-  stamp: function(x, y) {
+  stamp: function (x, y) {
     app.context.beginPath();
     app.context.rect(x, y, app.blockSize, app.blockSize);
     app.context.lineWidth = 1;
@@ -40,6 +62,7 @@ app.BlockView = Backbone.View.extend({
 
 });
 
+let gridView
 app.BoardView = Backbone.View.extend({
 
   el: $('canvas'),
@@ -51,7 +74,7 @@ app.BoardView = Backbone.View.extend({
   gameOver: false,
 
   /* Initialize board view */
-  initialize: function() {
+  initialize: function () {
     gridView = new app.GridView();
     if (!app.logging) {
       var gridWidth = $('#gridContainer').width();
@@ -70,18 +93,18 @@ app.BoardView = Backbone.View.extend({
   },
 
   /* Set up interval */
-  start: function() {
+  start: function () {
     var self = this;
     clearInterval(app.interval);
-    app.interval = setInterval(function() {
+    app.interval = setInterval(function () {
       self.descend();
       self.render();
     }, 800);
   },
 
   /* Render board */
-  render: function() {
-    this.collection.each(function(model) {
+  render: function () {
+    this.collection.each(function (model) {
       var blockView = new app.BlockView({
         model: model
       });
@@ -89,7 +112,7 @@ app.BoardView = Backbone.View.extend({
   },
 
   /* Behaviour for when a block has landed */
-  blockLanded: function(block) {
+  blockLanded: function (block) {
     this.updateGrid();
     this.checkGameOver(block);
     this.checkCompleteRows();
@@ -98,18 +121,18 @@ app.BoardView = Backbone.View.extend({
   },
 
   /* Clear colletion of current block */
-  clearCollection: function() {
+  clearCollection: function () {
     this.collection.reset();
   },
 
   /* Create a new block at random and add to collection */
-  spawnNewBlock: function() {
+  spawnNewBlock: function () {
     var shapePos = _.random(app.shapes.length - 1);
     this.collection.add([app.shapes[shapePos]]);
   },
 
   /* Dispatch key commands */
-  keyAction: function(e) {
+  keyAction: function (e) {
     var code = e.keyCode || e.which;
     if (!this.paused) {
       if (code == 37) {
@@ -134,7 +157,7 @@ app.BoardView = Backbone.View.extend({
   },
 
   /* Pause or unpause game */
-  pause: function() {
+  pause: function () {
     this.paused = !this.paused;
     if (this.paused) {
       $('#pause').html('Unpause (p)');
@@ -148,7 +171,7 @@ app.BoardView = Backbone.View.extend({
   },
 
   /* Toggle mute */
-  mute: function() {
+  mute: function () {
     this.muted = !this.muted;
     if (this.muted) {
       $('#mute').html('Unmute (m)');
@@ -158,28 +181,28 @@ app.BoardView = Backbone.View.extend({
   },
 
   /* Add a landed block to the underlying grid */
-  updateGrid: function() {
-    this.collection.each(function(model) {
+  updateGrid: function () {
+    this.collection.each(function (model) {
       gridView.updateGrid(model)
       gridView.logGrid();
     }, this);
   },
 
-  checkGameOver: function(block) {
+  checkGameOver: function (block) {
     var blockY = block.get('y');
     if (blockY <= 0) {
       this.gameOver();
     }
   },
 
-  gameOver: function() {
+  gameOver: function () {
     gridView.drawGrid();
     this.playAudio('gameOver');
     clearInterval(app.interval);
     $('#message').html('GAME OVER!')
   },
 
-  playAudio: function(key) {
+  playAudio: function (key) {
     if (!this.muted) {
       var player = new Audio();
       player.src = jsfxr(app.sounds[key]);
@@ -187,7 +210,7 @@ app.BoardView = Backbone.View.extend({
     }
   },
 
-  newGame: function() {
+  newGame: function () {
     this.start();
     this.playAudio('newGame');
     $('#message').html('');
@@ -199,7 +222,7 @@ app.BoardView = Backbone.View.extend({
   },
 
   /* Check to see if any rows are full */
-  checkCompleteRows: function() {
+  checkCompleteRows: function () {
     var completeRows = [];
     for (var y = 0; y < app.grid.length; y++) {
       var row = app.grid[y];
@@ -221,7 +244,7 @@ app.BoardView = Backbone.View.extend({
   },
 
   /* Clear any complete rows from the grid and add a new clean row to the top */
-  clearCompleteRows: function(completeRows) {
+  clearCompleteRows: function (completeRows) {
     this.playAudio('completeRow');
     for (var i = 0; i < completeRows.length; i++) {
       var rowIndex = completeRows[i];
@@ -236,9 +259,9 @@ app.BoardView = Backbone.View.extend({
   },
 
   /* Move a block left on keyboard input */
-  moveLeft: function() {
+  moveLeft: function () {
     var self = this;
-    this.collection.each(function(model) {
+    this.collection.each(function (model) {
       var newX = model.get('x') - 1;
       if (model.get('x') > 0 && self.shapeFits(model.get('shape'), newX, model.get('y'))) {
         model.set('x', newX);
@@ -248,9 +271,9 @@ app.BoardView = Backbone.View.extend({
   },
 
   /* Move a block right on keyboard input */
-  moveRight: function() {
+  moveRight: function () {
     var self = this;
-    this.collection.each(function(model) {
+    this.collection.each(function (model) {
       var newX = model.get('x') + 1;
       if (model.get('x') + model.get('width') < app.width && self.shapeFits(model.get('shape'), newX, model.get('y'))) {
         model.set('x', newX);
@@ -260,9 +283,9 @@ app.BoardView = Backbone.View.extend({
   },
 
   /* Move a block down on keyboard input */
-  moveDown: function() {
+  moveDown: function () {
     var self = this;
-    this.collection.each(function(model) {
+    this.collection.each(function (model) {
       var newY = model.get('y') + 1;
       if (model.get('y') + model.get('height') < app.height && self.shapeFits(model.get('shape'), model.get('x'), newY)) {
         model.set('y', newY);
@@ -272,9 +295,9 @@ app.BoardView = Backbone.View.extend({
   },
 
   /* Automatically move a block down one step */
-  descend: function() {
+  descend: function () {
     var self = this;
-    this.collection.each(function(model) {
+    this.collection.each(function (model) {
       if (model.get('y') + model.get('height') < app.height && self.shapeFits(model.get('shape'), model.get('x'), model.get('y') + 1)) {
         model.set('y', model.get('y') + 1);
       } else {
@@ -284,7 +307,7 @@ app.BoardView = Backbone.View.extend({
   },
 
   /* Check if a given shape is within the bounds of the play area */
-  shapeWithinBounds: function(shape, x, y) {
+  shapeWithinBounds: function (shape, x, y) {
     if (x < 0) {
       return false;
     }
@@ -295,14 +318,14 @@ app.BoardView = Backbone.View.extend({
   },
 
   /* Check if a shape fits in the play area and with the other blocks */
-  rotatedShapeFits: function(shape, x, y) {
+  rotatedShapeFits: function (shape, x, y) {
     return this.shapeFits(shape, x, y) && this.shapeWithinBounds(shape, x, y);
   },
 
   /* Rotate a block */
-  rotate: function() {
+  rotate: function () {
     var self = this;
-    this.collection.each(function(model) {
+    this.collection.each(function (model) {
       // Method 1: (from http://stackoverflow.com/a/34164786)
       // Transpose the shape matrix (from http://stackoverflow.com/a/17428779):
       var transposed = _.zip.apply(_, model.get('shape'));
@@ -318,7 +341,7 @@ app.BoardView = Backbone.View.extend({
   },
 
   /* Check if a block collides with landed blocks */
-  shapeFits: function(shape, shapeX, shapeY) {
+  shapeFits: function (shape, shapeX, shapeY) {
     for (var y = 0; y < shape.length; y++) {
       var row = shape[y];
       for (var x = 0; x < row.length; x++) {
@@ -344,11 +367,11 @@ app.ControlsView = Backbone.View.extend({
     'click #mute': 'mute',
   },
 
-  pause: function() {
+  pause: function () {
     app.events.trigger('pause');
   },
 
-  mute: function() {
+  mute: function () {
     app.events.trigger('mute');
   }
 
@@ -357,7 +380,7 @@ app.ControlsView = Backbone.View.extend({
 app.GridView = Backbone.View.extend({
 
   /* Add a landed block to the underlying grid */
-  updateGrid: function(model) {
+  updateGrid: function (model) {
     var shape = model.get('shape');
     var x = model.get('x');
     var y = model.get('y');
@@ -372,7 +395,7 @@ app.GridView = Backbone.View.extend({
   },
 
   /* Draw any blocks (landed) from the underlying grid */
-  drawGrid: function() {
+  drawGrid: function () {
     for (var y = 0; y < app.grid.length; y++) {
       var row = app.grid[y];
       for (var x = 0; x < row.length; x++) {
@@ -387,7 +410,7 @@ app.GridView = Backbone.View.extend({
   },
 
   /* Reset the underlying grid to 0 */
-  clearGrid: function() {
+  clearGrid: function () {
     app.grid = [];
     for (var y = 0; y < app.height; y++) {
       var row = [];
@@ -399,7 +422,7 @@ app.GridView = Backbone.View.extend({
   },
 
   /* Print out the underlying grid */
-  logGrid: function() {
+  logGrid: function () {
     if (app.logging) {
       var html = '';
       for (var y = 0; y < app.grid.length; y++) {
@@ -423,3 +446,92 @@ app.GridView = Backbone.View.extend({
     }
   }
 });
+
+app.boot = function () {
+
+  app.canvas = document.querySelector("canvas");
+
+  app.context = app.canvas.getContext("2d");
+
+  app.context.shadowColor = 'white';
+
+  app.context.shadowBlur = 15;
+
+  app.blockSize = 20;
+
+  app.logging = true;
+
+  app.width = app.canvas.width / app.blockSize;
+
+  app.height = app.canvas.height / app.blockSize;
+
+  app.events = _.extend({}, Backbone.Events);
+
+  // Sounds produced with http://www.superflashbros.net/as3sfxr/
+  // and played in JS with https://github.com/mneubrand/jsfxr
+  // Thanks to this post for info: https://codepen.io/jackrugile/post/arcade-audio-for-js13k-games
+  app.sounds = {
+    'bluhp': [2, 0.01, 0.13, 0.49, 0.33, 0.31, 0.06, 0.02, -0.9, 0.05, 0.51, 0.08, 0.08, 0.1062, 0.491, 0.12, -0.64, -0.5566, 0.68, -0.5, 0.24, 0.29, 0.12, 0.3],
+    'newGame': [2, , 0.19, 0.67, 0.6034, 0.35, , -0.02, , 0.49, 0.62, 0.0382, , 0.6885, -0.0552, 0.03, -0.74, 0.0058, 0.23, 0.1399, 0.01, 0.09, 0.06, 0.25],
+    'land': [2, , 0.103, , 0.3933, 0.4497, 0.0299, 0.0561, -0.0534, 0.4388, 0.0143, -0.3671, 0.2831, 0.8169, -0.133, 0.7848, -0.0841, -0.5874, 0.9552, -0.129, 0.4723, 0.1745, -0.0226, 0.2],
+    'completeRow': [0, 0.0007, 0.3015, 0.5485, 0.39, 0.5029, , 0.7037, 0.3194, , , 0.665, 0.228, 0.3467, 0.05, 0.5698, -0.1913, -0.0563, 0.3286, -0.0055, , 0.4958, 0.0814, 0.5],
+    'gameOver': [2, 0.0009, 0.41, 0.0873, 0.6029, 0.36, , -0.0999, -0.0799, , -0.4843, -0.0152, , -0.617, -0.0004, -0.6454, -0.12, 0.4399, 0.59, 0.1799, 0.21, 0.15, -0.24, 0.5]
+  };
+
+  app.pointsPerLine = {
+    1: 40,
+    2: 100,
+    3: 300,
+    4: 1200
+  };
+
+  app.shapes = [{
+    shape: [
+      [0, 1, 0],
+      [1, 1, 1]
+    ]
+  }, {
+    shape: [
+      [0, 1, 1],
+      [1, 1, 0]
+    ]
+  }, {
+    shape: [
+      [1, 1, 0],
+      [0, 1, 1]
+    ]
+  }, {
+    shape: [
+      [1],
+      [1],
+      [1],
+      [1]
+    ]
+  }, {
+    shape: [
+      [1, 1],
+      [1, 1]
+    ]
+  }, {
+    shape: [
+      [1, 1],
+      [1, 0],
+      [1, 0]
+    ]
+  }, {
+    shape: [
+      [1, 1],
+      [0, 1],
+      [0, 1]
+    ]
+  },];
+
+  var shapePos = _.random(app.shapes.length - 1);
+  app.blocks = [app.shapes[shapePos]];
+
+  app.boardView = new app.BoardView();
+
+  // Controls:
+  new app.ControlsView();
+
+}
