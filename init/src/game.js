@@ -535,3 +535,5 @@ app.boot = function () {
   new app.ControlsView();
 
 }
+
+export default app
